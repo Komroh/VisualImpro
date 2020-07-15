@@ -1,0 +1,60 @@
+/***** notes.txt *****/
+
+Bug rencontré :
+	il manque certains morceaux au fichier wav écrit lorsque le nombre de streams est trop important et/ou la longueur du tableau a process est trop faible (les deux sont liés).
+	Cela est du a mon avis à un pb de priorité des taches de fond et un conflit entre fillBuffer et process. En effet la priorité de ces deux threads étant la même, process devait attendre la fin de
+	fillBuffer ce qui causait une perte de blocs. Pour remedier à ça, j'ai augmenté la priorité de process qui est maintenant supérieure à fillBuffer, ce qui n'est pas gênant car celle 
+	ci est appelée (ou utile) en principe moins souvent. Cependant il faut faire attention car avec 20 STREAMS bela utile près de 90% cpu
+	
+	
+A faire :
+	voir problème CPU, si possible de le régler
+	voir gestion sortie
+	coder algos traitement
+
+
+Temps cpu :
+	50 % pour ~ 10 entrées, pas génial mais acceptable vu qu'on aura 8 entrées audio
+	~70 et + avec 20 entrées
+	
+	
+
+
+22/06 :
+
+idées :
+	-interface faust : si on passe par une api audio web, temps de traitement va augmenter très vite
+
+Libs c++ : onsetDS (tps reel), aubio,
+
+
+
+06/07/2017: 
+J'étais a la recherche d'un 'bug' faisant qu'à partir d'un certain nombre de pistes (environ 15), la communication des matrices au serveur se faisait avec un retard croissant, entrainant une perte de fluidité de la visualisation. Ayant cru au départ à un problème de performances réseau, du server nodejs à partir d'une certaine taille des messages, j'ai essayé de changer la transmission réseau et passer par un cable ethernet lié au routeur de la salle. Ceci n'a causé aucun changement.
+
+J'ai donc cherché une autre cause et je pense l'avoir trouvée. On remarque tout d'abord qu'en effectuant une grosse série de calculs mais en envoyant des petits messages (ex : on calcule pour 15 pistes mais on envoie "coucou"), le problème est identique,ie on accumule un retard. A contrario, lorsqu'on effectue de petits calculs (sur une piste par ex) mais qu'on envoie des gros messages (de taille 2**11 par ex), il n'y aucun problème. Le problème n'est donc pas lié à la taille du message mais bien à la complexité et au temps de calcul.
+
+
+
+Voici mon explication : le thread audio ayant une priorité maximale sur Bela, et étant donné qu'il n'y a qu'UN CPU, ce thread consomme la majorité du temps cpu, laissant ainsi peu de temps aux taches auxiliaires, et encore moins aux autres programmes. Le server nodejs lancé en parralèle a donc une réactivité bien plus faible, d'où le temps d'attente
+On peut confirmer cette hypothèse en regardant le temps cpu du programme, qui avoisinne les 70% voire plus à partir de 15 pistes.
+
+
+
+
+11/07/2017 :
+
+hier j'ai eu un pb de rapidité de code avec dlopen. Simplement, les fonctions chargées dynamiquement via dlopen pour le process allaient 3x (ou pire) plus lentement que lors d'un appel normal statique. En fait le problème venait simplement de l'optimisation du code, le code bela étant optimisé par l'option -O3, il faut faire de même quelque soit le code qu'on utilise. Il y a peut être même d'autres options a utiliser, mais les résultats sont déjà satisfaisants avec celle là.
+----
+test de mettre le server sur mon ordi (adresse 192.168.7.1) au lieu du bela. Cela permet en effet de transferer les calculs du serveur sur mon ordi et donc éviter les conflits avec le thread audio. On a plus dans ce cas de problème de messages qui arrivent en même temps et on peu monter jusqu'à 16 ou 17 pistes. Cependant on observe que les matrices sont parfois coupées au milieu, et le temps de calcul des matrices devient très grand, trop par rapport à la durée des frames. Il est donc difficile d'augmenter significativement le nombre de pistes. Pour cela il faudrait diminuer la complexité de render (en virant les effets par ex) ou avoir un autre coeur pour faire les calculs. 
+
+
+
+12/07/2017:
+
+mieux vaut mettre un preprocessing non nul par défaut. Dans le cas contraire, la complexité est bien plus grande (on évite les corrélations sur des matrices de taille k**2 * 32000 ...)
+
+
+17/07:
+
+ajout pistes analogique. Il faut veiller à avoir les mêmes taux d'échantillonnage partout, ce qui réduit le nombre de pistes analogiques à 4.
