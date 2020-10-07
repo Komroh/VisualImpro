@@ -47,13 +47,10 @@ static void signal_handler(int sig_num)
     s_signal_received = sig_num;
 }
 
-static void sendFrame(string& str)
-{
-	str ="ok";
-}
 
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 {
+//	bool connected = false;
     switch (ev)
     {
         case MG_EV_WEBSOCKET_HANDSHAKE_DONE:
@@ -63,22 +60,20 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
             mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, str.c_str(), str.size());
             break;
         }
-        case MG_EV_WEBSOCKET_FRAME :
-        {
-        	string str;
-        	sendFrame(str);
-        	mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, str.c_str(), str.size());
-          cout << "sent" << endl;
-        	break;
-        }
-
+       
          case MG_EV_HTTP_REQUEST:
         {
             mg_serve_http(nc, (struct http_message *) ev_data, s_http_server_opts);
             break;
         }
         
-        
+        case MG_EV_POLL:
+        {
+        	string str = "Yo";//(char *)nc->user_data;
+        	//cout << str << endl;
+        	mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, str.c_str(), str.size());
+        	break;
+        }
 
         case MG_EV_CLOSE:
         {
@@ -122,7 +117,6 @@ sock.setServer(ADDR);*/
     signal(SIGINT, signal_handler);
     setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(stderr, NULL, _IOLBF, 0);
-
 	mg_mgr_init(&mgr, NULL);
 
 	this->nc = mg_bind(&mgr,std::to_string(_port).c_str() ,ev_handler);
@@ -131,7 +125,7 @@ sock.setServer(ADDR);*/
   s_http_server_opts.enable_directory_listing = "yes";
 	
   	printf("Started on port %s\n", s_http_port);
-  	while (s_signal_received == 0) {
+  	while (/*s_signal_received == 0*/!stop) {
     mg_mgr_poll(&mgr, 200); }
 	return 0;
   /*SYSCALL(this->sockfd, -1, "ERROR OPENING SOCKET");
@@ -159,10 +153,10 @@ sock.setServer(ADDR);*/
 int Connection::send( string &msg){
 
 //TCP
-cout << "Message sent" <<endl;
+/*cout << "Message sent" <<endl;
 string str = "Toujours Debout";
-mg_send_websocket_frame(this->nc, WEBSOCKET_OP_TEXT, msg.c_str(), msg.size());
-
+mg_send_websocket_frame(this->nc, WEBSOCKET_OP_TEXT, msg.c_str(), msg.size());*/
+nc->user_data = const_cast<char *>(msg.c_str());
 return 1;
 /*
   string tosend = msg;

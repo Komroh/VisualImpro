@@ -45,6 +45,7 @@ private :
   string _addr;
   struct mg_connection *nc;
   struct mg_mgr mgr;
+  bool stop;
 
 public :
   //Fefault settings
@@ -58,6 +59,8 @@ public :
   int end();
   bool getIsConnected(){return _isConnected;};
   void setIsConnected(bool b){_isConnected = b;};
+  void setStop(bool b){stop = b;};
+  
 };
 
 

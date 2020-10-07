@@ -339,7 +339,9 @@ bool setup(BelaContext *context, void *userData) {
   initBuffers();
   initSampleStreams(gUserSet);
   printInfo();
-  return initAuxiliaryTasks();
+  bool b = initAuxiliaryTasks();
+  Bela_scheduleAuxiliaryTask(gStartServerTask);
+  return b;
 }
 
 /**
@@ -356,7 +358,7 @@ bool setup(BelaContext *context, void *userData) {
  */
 void render(BelaContext *context, void *userData) {
 
-  Bela_scheduleAuxiliaryTask(gStartServerTask);
+  
   // Check if buffers need filling
   if (fillless == 0) {
     Bela_scheduleAuxiliaryTask(gFillBuffersTask);
@@ -385,6 +387,7 @@ void render(BelaContext *context, void *userData) {
 
     if (gFillPosition == gBufferProLen - 1) {
       gProcessBufferCopy->swap(*gProcessBuffer); // O(1)
+      
       gFillPosition = -1;
       gBufferProcessed = 0;
       Bela_scheduleAuxiliaryTask(gProcessBufferTask);
@@ -392,11 +395,12 @@ void render(BelaContext *context, void *userData) {
 
     /******* EFFECT LOOP ********/
 
-    if (gUseEffects) {
+    if (/*gUseEffects*/false) {
       // Files
       for (int i = 0; i < gNumStreams; i++) {
         insample =
             (sampleStream[i]->getSample(0) + sampleStream[i]->getSample(1)) / 2;
+            
         gEffectBufferIn->setCase(i, gReadPointer, insample);
       }
 
@@ -438,6 +442,7 @@ void render(BelaContext *context, void *userData) {
       // Transfert informations from the effect buffer Out to the process buffer
       for (int s = 0; s < gNumStreams + gNumAnalog + gNumAudio; s++) {
         float outsample = gEffectBufferOut->getCase(s, gWritePointer);
+        
         gProcessBuffer->setCase(s, gFillPosition + 1, outsample);
         out += outsample;
       }
@@ -452,6 +457,7 @@ void render(BelaContext *context, void *userData) {
       for (int s = 0; s < gNumStreams; s++) {
         outsample = (sampleStream[s]->getSample(0) +
                      sampleStream[s]->getSample(1)) / 2;
+        
         gProcessBuffer->setCase(s, gFillPosition + 1, outsample);
         out += outsample*gMeanCorrel[s];
 	     }
@@ -504,7 +510,8 @@ void render(BelaContext *context, void *userData) {
  * every samples stored in the sampleStrem array
  */
 void cleanup(BelaContext *context, void *userData) {
-  gUserSet.conn.end(); // end UDP connection
+  gUserSet.conn.setStop(gShouldStop); 
+  gUserSet.conn.end();// end UDP connection
   for (int i = 0; i < gNumStreams; i++) {
     delete sampleStream[i];
   }

@@ -50,11 +50,14 @@ ProcessMultiCorrel::~ProcessMultiCorrel() { matrixfile.close(); }
  */
  
 Matrix<vector<float>> ProcessMultiCorrel::calcul_correl(const Matrix<float>& buffer){
+
   int size = buffer.getSize();
   Matrix<vector<float>> correlMatrix(size);
   vector<float> coeffcorrel;
+	
   for (int i = 0; i < size; i++) {
     for (int j = 0; j < i; j++) {
+    	
       coeffcorrel = this->_coeffcorrel(buffer.getRow(i), buffer.getRow(j));
       correlMatrix.setCase(i, j, coeffcorrel);
       correlMatrix.setCase(j, i, coeffcorrel);
@@ -100,16 +103,26 @@ string toJson(Matrix<vector<float>> mat)
 	JSONObject root;
 	JSONArray array;
 	int size = mat.getSize();
+	//cout << size << endl;
 	for (int i = 0; i < size; i++) {
-    for (int j = 0; j < i; j++) {
-		array.push_back(new JSONValue(mat.getCase(i,j).data()));
+    for (int j = 0; j < size; j++) {
+    	JSONArray arr;
+    	for(float l : mat.getCase(i,j))
+			arr.push_back(new JSONValue(l));
+		//vector<float> vec = mat.getCase(i,j);
+		array.push_back(new JSONValue(arr));
 		}
 	}
-	
+	JSONValue *val = new JSONValue(array);
+	std::wstring test =  val->Stringify().c_str();
+	std::string s( test.begin(), test.end() );
+	//delete val;
+	//cout << s << endl;
 	root[L"Tensor"] = new JSONValue(array);
 	JSONValue *value = new JSONValue(root);
 	std::wstring wide = value->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
+	delete value;
 	return str;
 }
 
@@ -119,7 +132,7 @@ void ProcessMultiCorrel::process(const Matrix<float>& buffer,
   Matrix<float> copy = buffer;
 
   // Processing functions
-  copy = _preprocess(buffer);
+  //copy = _preprocess(buffer);
   Matrix<vector<float>> correlMatrix = calcul_correl(copy);
   //process_volume(correlMatrix, meanCorrelations);
   //Matrix<RGB> mat = color_matrix(correlMatrix);
