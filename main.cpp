@@ -298,10 +298,10 @@ cout <<" config.getTracks().front()" <<endl;
   gChSettings.nb_files = gChSettings.filenames.size();
 
   // Check if there is at least one track
- /* if (gChSettings.nb_files + gChSettings.nb_analog + gChSettings.nb_audio == 0){
+  if (gChSettings.nb_files + gChSettings.nb_analog + gChSettings.nb_audio == 0){
     fprintf(stderr, "No track, end");
     exit(EXIT_FAILURE);
-  }*/
+  }
 
   // Check if the total number of tracks is not greater than the maximum number
   // tracks authorized

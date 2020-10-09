@@ -27,6 +27,7 @@ The Bela software is distributed under the GNU Lesser General Public License
 #include <sys/time.h>
 #include <time.h>
 #include <SampleStream.hpp>
+#include <csignal>
 #include "ChannelsSettings.h"
 #include "Echo.hpp"
 #include "EffectManaging.hpp"
@@ -207,10 +208,21 @@ Order in Buffers :
 - from gNumStreams + gNumAnalog to gNumStreams + gNumAnalog + gNumAudio : audio
 */
 
+/**
+ * \fn     void initConnection()
+ * \brief  Auxiliary task that starts the websocket server.
+ */
 AuxiliaryTask gStartServerTask;
 void initConnection(void *arg)
 {
 	gUserSet.conn.init();
+}
+
+void signalHandler(int signum)
+{
+	cout << "Interrupt signal (" << signum << ") received.\n";
+	gUserSet.conn.setStop(true);
+	exit(signum);
 }
 /**
  * \fn     void initUserSet(ChSettings& gUserSet)
@@ -339,6 +351,8 @@ bool setup(BelaContext *context, void *userData) {
   initBuffers();
   initSampleStreams(gUserSet);
   printInfo();
+  signal(SIGQUIT,signalHandler);
+ 
   bool b = initAuxiliaryTasks();
   Bela_scheduleAuxiliaryTask(gStartServerTask);
   return b;
@@ -358,7 +372,8 @@ bool setup(BelaContext *context, void *userData) {
  */
 void render(BelaContext *context, void *userData) {
 
-  
+   
+   //cout << gShouldStop << endl;
   // Check if buffers need filling
   if (fillless == 0) {
     Bela_scheduleAuxiliaryTask(gFillBuffersTask);
@@ -510,7 +525,8 @@ void render(BelaContext *context, void *userData) {
  * every samples stored in the sampleStrem array
  */
 void cleanup(BelaContext *context, void *userData) {
-  gUserSet.conn.setStop(gShouldStop); 
+	
+  gUserSet.conn.setStop(gShouldStop);
   gUserSet.conn.end();// end UDP connection
   for (int i = 0; i < gNumStreams; i++) {
     delete sampleStream[i];

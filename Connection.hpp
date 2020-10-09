@@ -59,7 +59,7 @@ public :
   int end();
   bool getIsConnected(){return _isConnected;};
   void setIsConnected(bool b){_isConnected = b;};
-  void setStop(bool b){stop = b;};
+  void setStop(bool b){cout << "Bravo" << endl; stop = b;};
   
 };
 

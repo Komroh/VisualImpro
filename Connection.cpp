@@ -67,13 +67,13 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
             break;
         }
         
-        case MG_EV_POLL:
+        /*case MG_EV_POLL:
         {
         	string str = "Yo";//(char *)nc->user_data;
         	//cout << str << endl;
         	mg_send_websocket_frame(nc, WEBSOCKET_OP_TEXT, str.c_str(), str.size());
         	break;
-        }
+        }*/
 
         case MG_EV_CLOSE:
         {
@@ -118,7 +118,7 @@ sock.setServer(ADDR);*/
     setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(stderr, NULL, _IOLBF, 0);
 	mg_mgr_init(&mgr, NULL);
-
+	stop = false;
 	this->nc = mg_bind(&mgr,std::to_string(_port).c_str() ,ev_handler);
 	mg_set_protocol_http_websocket(nc);
   s_http_server_opts.document_root = ".";  // Serve current directory
@@ -127,6 +127,7 @@ sock.setServer(ADDR);*/
   	printf("Started on port %s\n", s_http_port);
   	while (/*s_signal_received == 0*/!stop) {
     mg_mgr_poll(&mgr, 200); }
+    cout << "Je passe à travers"  << endl;
 	return 0;
   /*SYSCALL(this->sockfd, -1, "ERROR OPENING SOCKET");
 
