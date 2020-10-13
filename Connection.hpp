@@ -46,7 +46,7 @@ private :
   struct mg_connection *nc;
   struct mg_mgr mgr;
   bool stop;
-
+  
 public :
   //Fefault settings
 	Connection() : _port(9090), _addr("127.0.0.1") {}

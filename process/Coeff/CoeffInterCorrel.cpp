@@ -51,7 +51,7 @@ extern "C"{
   {
 
   int size = s1.size();
-  float min = 1.0;
+/*float min = 1.0;
   float max = 0.0;
   vector<float> s1Norm = s1;
   vector<float> s2Norm = s2;
@@ -68,13 +68,13 @@ extern "C"{
   else
     {
 
-      s1Norm[i] = (s1[i] - min) / (max - min);
-      s2Norm[i] = (s2[i] - min) / (max - min);
+      s1Norm[i] = 2*((s1[i] - min) / (max - min))-1;
+      s2Norm[i] = 2*((s2[i] - min) / (max - min))-1;
     }
 
     if(s2[i] < 0.0)
       s2Norm[i] = 0.0;
-  }
+  }*/
 
 
   /*  int tau;
@@ -109,8 +109,8 @@ extern "C"{
   for(int i = 0; i<size ;i++)
   {
       if(i<size) {
-          in_s1[i].real(s1Norm[i]);
-          in_s2[i].real(s2Norm[i]);
+          in_s1[i].real(s1[i]);
+          in_s2[i].real(s2[i]);
       }
 
   }
@@ -132,7 +132,7 @@ extern "C"{
   for(int i = 0; i<size*2;i++)
   {
 
-     c[i] = (out_s1[i]*conj(out_s2[i])) *(1.0/size*2.0);
+     c[i] = (out_s1[i]*conj(out_s2[i]))/(1.0*size*2) ;
 
   }
   ifft_init(c, correlComplex, size*2);
@@ -140,7 +140,7 @@ extern "C"{
 
 //    Take real part of the correlation to return
   for(int i = 0; i<size;i++) {
-      correl[i] = real(correlComplex[i])/(1.0*size*2);
+      correl[i] = real(correlComplex[i]);
       cout << correl[i] << endl;
   }
 

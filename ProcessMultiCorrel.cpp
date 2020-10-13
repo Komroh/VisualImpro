@@ -113,11 +113,7 @@ string toJson(Matrix<vector<float>> mat)
 		array.push_back(new JSONValue(arr));
 		}
 	}
-	JSONValue *val = new JSONValue(array);
-	std::wstring test =  val->Stringify().c_str();
-	std::string s( test.begin(), test.end() );
-	//delete val;
-	//cout << s << endl;
+	
 	root[L"Tensor"] = new JSONValue(array);
 	JSONValue *value = new JSONValue(root);
 	std::wstring wide = value->Stringify().c_str();
@@ -132,7 +128,7 @@ void ProcessMultiCorrel::process(const Matrix<float>& buffer,
   Matrix<float> copy = buffer;
 
   // Processing functions
-  //copy = _preprocess(buffer);
+  copy = _preprocess(buffer);
   Matrix<vector<float>> correlMatrix = calcul_correl(copy);
   //process_volume(correlMatrix, meanCorrelations);
   //Matrix<RGB> mat = color_matrix(correlMatrix);

@@ -351,7 +351,7 @@ bool setup(BelaContext *context, void *userData) {
   initBuffers();
   initSampleStreams(gUserSet);
   printInfo();
-  signal(SIGQUIT,signalHandler);
+  signal(SIGINT,signalHandler);
  
   bool b = initAuxiliaryTasks();
   Bela_scheduleAuxiliaryTask(gStartServerTask);
