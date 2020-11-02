@@ -172,9 +172,11 @@ private :
   Matrix<vector<float>> calcul_correl(const Matrix<float>& buffer);
   void process_volume(const Matrix<float>& correlMatrix,
                       vector<float>& meanCorrelations);
+  vector<vector<float>> calcul(Matrix<vector<float>> correlMatrix);
   Matrix<RGB> color_matrix(const Matrix<float>& correlMatrix);
   std::unique_ptr<AuxTaskRT> send_task;
   ofstream matrixfile;
+
 };
 
 #endif //SIMPLECORREL_HPP

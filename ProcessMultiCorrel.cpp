@@ -18,6 +18,7 @@
 #include <iomanip>
 #include <sys/time.h>
 #include <AuxTaskRT.h>
+#include <algorithm>
 #include "Matrix.hpp"
 #include "ProcessMultiCorrel.hpp"
 
@@ -97,28 +98,63 @@ Matrix<RGB> ProcessMultiCorrel::color_matrix(const Matrix<float>& correlMatrix){
 /**
  * Calling every processing function sequentially.
  */
-
-string toJson(Matrix<vector<float>> mat)
+ 
+ void timeDelay(vector<float> c, float* delay, float * max)
+ {
+ 	int frame_size = 2048;
+ 	int samplerate = 44100;
+ 	int maxIndex = std::max_element(c.begin(),c.end()) - c.begin();
+ 	 *max = *std::max_element(c.begin(),c.end());
+ 	 *delay = abs((maxIndex - frame_size) / (1.0 * samplerate));
+ }
+ 
+vector<vector<float>> ProcessMultiCorrel::calcul(Matrix<vector<float>> correlMatrix)
 {
-	JSONObject root;
-	JSONArray array;
-	int size = mat.getSize();
-	//cout << size << endl;
-	for (int i = 0; i < size; i++) {
-    for (int j = 0; j < size; j++) {
-    	JSONArray arr;
-    	for(float l : mat.getCase(i,j))
-			arr.push_back(new JSONValue(l));
-		//vector<float> vec = mat.getCase(i,j);
-		array.push_back(new JSONValue(arr));
+	
+	 vector<float> timeDelays;
+	 vector<float> correl;
+	 vector<vector<float>> res;
+	 float t;
+	 float corr; 
+	for(int i = 0; i < correlMatrix.getSize(); i++){
+		for(int j = 0; j < i; j++){
+			 timeDelay(correlMatrix.getCase(i,j), &t, &corr);
+		
+			 timeDelays.push_back(t);
+			 correl.push_back(corr);
 		}
 	}
+	res.push_back(timeDelays);
+	res.push_back(correl);
+	return res;
+}
+string toJson(vector<vector<float>> vec)
+{
+	JSONObject root;
+	JSONObject tensor;
+	JSONArray array;
+	int k =0;
 	
-	root[L"Tensor"] = new JSONValue(array);
+
+    	JSONArray arr;
+    	for(vector<float> v : vec){
+    		
+    		for(float l : v){
+			arr.push_back(new JSONValue(l));
+		}
+		string s = to_string(k);
+		wstring ws= wstring(s.begin(), s.end());
+		root[L"vec "+ws] = new JSONValue(arr);
+		arr.clear();
+		k++;
+	}
+	
+	
 	JSONValue *value = new JSONValue(root);
 	std::wstring wide = value->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
 	delete value;
+	cout << str << endl;
 	return str;
 }
 
@@ -132,10 +168,11 @@ void ProcessMultiCorrel::process(const Matrix<float>& buffer,
   Matrix<vector<float>> correlMatrix = calcul_correl(copy);
   //process_volume(correlMatrix, meanCorrelations);
   //Matrix<RGB> mat = color_matrix(correlMatrix);
-
+	vector<vector<float>> cal = calcul(correlMatrix);
   // Send data
-  string str = toJson(correlMatrix);
+  string str = toJson(cal);
   send_task =  std::unique_ptr<AuxTaskRT>(new AuxTaskRT());
   send_task->create("send-task", [conn, str]() mutable {conn.send(str);},75);
   send_task->schedule();
+  
 }

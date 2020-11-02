@@ -61,26 +61,19 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
             mg_serve_http(nc, (struct http_message *) ev_data, s_http_server_opts);
             break;
         }
-        
-        case MG_EV_CLOSE:
-        {
-        	
-            break;
-        }
     }
 }
 
 int Connection::init(){
-	
+	struct mg_connection *nc;
     signal(SIGTERM, signal_handler);
     signal(SIGINT, signal_handler);
     setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(stderr, NULL, _IOLBF, 0);
 	mg_mgr_init(&mgr, NULL);
 	stop = false;
-	this->nc = nullptr;
-	this->nc = mg_bind(&mgr,std::to_string(_port).c_str() ,ev_handler);
-	
+
+	nc = mg_bind(&mgr,std::to_string(_port).c_str() ,ev_handler);
 	mg_set_protocol_http_websocket(nc);
     s_http_server_opts.document_root = ".";  // Serve current directory
     s_http_server_opts.enable_directory_listing = "yes";
@@ -94,14 +87,14 @@ int Connection::init(){
 	return 0;
 }
 
-
 int Connection::send( string &msg){
-
-
 //cout << "Message sent" <<endl;
-mg_send_websocket_frame(mgr.active_connections, WEBSOCKET_OP_TEXT, msg.c_str(), msg.size());
-return 1;
+	
+		mg_send_websocket_frame(mgr.active_connections, WEBSOCKET_OP_TEXT, msg.c_str(), msg.size());
+	
 
+
+return 1;
 }
 
 int Connection::end(){

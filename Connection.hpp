@@ -43,7 +43,6 @@ private :
   bool _isConnected; //TCP
   int _port;
   string _addr;
-  struct mg_connection *nc;
   struct mg_mgr mgr;
   bool stop;
   
@@ -62,7 +61,5 @@ public :
   void setStop(bool b){cout << "Bravo" << endl; stop = b;};
   
 };
-
-
 
 #endif //CONNECT_HPP
