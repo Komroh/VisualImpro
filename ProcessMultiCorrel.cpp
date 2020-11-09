@@ -57,7 +57,7 @@ Matrix<vector<float>> ProcessMultiCorrel::calcul_correl(const Matrix<float>& buf
   vector<float> coeffcorrel;
 	
   for (int i = 0; i < size; i++) {
-    for (int j = 0; j < i; j++) {
+    for (int j = 0; j < size; j++) {
     	
       coeffcorrel = this->_coeffcorrel(buffer.getRow(i), buffer.getRow(j));
       correlMatrix.setCase(i, j, coeffcorrel);
@@ -95,12 +95,13 @@ Matrix<RGB> ProcessMultiCorrel::color_matrix(const Matrix<float>& correlMatrix){
   return RGBmatrix;
 }
 
-/**
- * Calling every processing function sequentially.
+
+  /**
+ * Compute compute the time delay and maximal correlation for each correlation vector.
  */
- 
  void timeDelay(vector<float> c, float* delay, float * max)
  {
+ 
  	int frame_size = 2048;
  	int samplerate = 44100;
  	int maxIndex = std::max_element(c.begin(),c.end()) - c.begin();
@@ -108,6 +109,9 @@ Matrix<RGB> ProcessMultiCorrel::color_matrix(const Matrix<float>& correlMatrix){
  	 *delay = abs((maxIndex - frame_size) / (1.0 * samplerate));
  }
  
+ /**
+ * Compute different informations from the correlation matrix.
+ */
 vector<vector<float>> ProcessMultiCorrel::calcul(Matrix<vector<float>> correlMatrix)
 {
 	
@@ -117,7 +121,7 @@ vector<vector<float>> ProcessMultiCorrel::calcul(Matrix<vector<float>> correlMat
 	 float t;
 	 float corr; 
 	for(int i = 0; i < correlMatrix.getSize(); i++){
-		for(int j = 0; j < i; j++){
+		for(int j = 0; j < correlMatrix.getSize(); j++){
 			 timeDelay(correlMatrix.getCase(i,j), &t, &corr);
 		
 			 timeDelays.push_back(t);
@@ -128,6 +132,10 @@ vector<vector<float>> ProcessMultiCorrel::calcul(Matrix<vector<float>> correlMat
 	res.push_back(correl);
 	return res;
 }
+
+/**
+ * Return a string of the entering vector formated in JSON.
+ */
 string toJson(vector<vector<float>> vec)
 {
 	JSONObject root;
@@ -154,10 +162,13 @@ string toJson(vector<vector<float>> vec)
 	std::wstring wide = value->Stringify().c_str();
 	std::string str( wide.begin(), wide.end() );
 	delete value;
-	cout << str << endl;
+	
 	return str;
 }
 
+/**
+ * Calling every processing function sequentially.
+ */
 void ProcessMultiCorrel::process(const Matrix<float>& buffer,
                                  vector<float>& meanCorrelations,
                                  Connection conn){
@@ -168,7 +179,7 @@ void ProcessMultiCorrel::process(const Matrix<float>& buffer,
   Matrix<vector<float>> correlMatrix = calcul_correl(copy);
   //process_volume(correlMatrix, meanCorrelations);
   //Matrix<RGB> mat = color_matrix(correlMatrix);
-	vector<vector<float>> cal = calcul(correlMatrix);
+  vector<vector<float>> cal = calcul(correlMatrix);
   // Send data
   string str = toJson(cal);
   send_task =  std::unique_ptr<AuxTaskRT>(new AuxTaskRT());

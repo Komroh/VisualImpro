@@ -88,9 +88,8 @@ int Connection::init(){
 }
 
 int Connection::send( string &msg){
-//cout << "Message sent" <<endl;
 	
-		mg_send_websocket_frame(mgr.active_connections, WEBSOCKET_OP_TEXT, msg.c_str(), msg.size());
+	mg_send_websocket_frame(mgr.active_connections, WEBSOCKET_OP_TEXT, msg.c_str(), msg.size());
 	
 
 
